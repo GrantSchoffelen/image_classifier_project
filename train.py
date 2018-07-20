@@ -30,8 +30,14 @@ def main():
     for param in model.parameters():
         param.requires_grad = False
 
+    if args.arch === 'densenet121':
+        input_size = 1024
+
+    if args.arch === 'vgg16':
+        input_size = 784
+
     classifier = nn.Sequential(OrderedDict([
-                              ('fc1', nn.Linear(1024, args.hidden_units)),
+                              ('fc1', nn.Linear(input_size, args.hidden_units)),
                               ('relu', nn.ReLU()),
                               ('drop', nn.Dropout(p=0.5)),
                               ('fc2', nn.Linear(args.hidden_units, 102)),
@@ -43,7 +49,7 @@ def main():
     criterion = nn.NLLLoss()
     optimizer = optim.Adam(model.classifier.parameters(), lr=args.learning_rate)
 
-    training_and_testing_saving(model, epochs, optimizer, criterion, args.gpu, image_sets, data_loaders, args.hidden_units)
+    training_and_testing_saving(model, epochs, optimizer, criterion, args.gpu, image_sets, data_loaders, args.hidden_units, input_size)
 
 def get_input_args():
     parser = argparse.ArgumentParser()
@@ -53,7 +59,7 @@ def get_input_args():
     parser.add_argument('--save_dir', type=str, default='checkpoints/',
                         help='directory to save checkpoints')
     parser.add_argument('--arch', type=str, default='densenet121',
-                        help='architecture model')
+                        help='architecture model densenet121 or vgg16')
     parser.add_argument('--learning_rate', type=float, default=0.01,
                         help='learning rate')
     parser.add_argument('--hidden_units', type=int, default=512,
@@ -148,7 +154,7 @@ def training_and_testing_saving(model, epochs, optimizer, criterion, gpu,
     correct = 0
     total = 0
     with torch.no_grad():
-        for data in testloader:
+        for data in data_loaders['testloader']:
             images, targets = data
             images = images.to(device)
             targets = targets.to(device)
@@ -158,10 +164,10 @@ def training_and_testing_saving(model, epochs, optimizer, criterion, gpu,
             correct += (predicted == targets).sum().item()
 
     print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
-    model.class_to_idx = train_data.class_to_idx
+    model.class_to_idx = data_loaders['train_data'].class_to_idx
 
     checkpoint = {
-        'input_size': 1024,
+        'input_size': input_size,
         'output_size': 102,
         'class_to_idx': model.class_to_idx,
         'hidden_layer': hidden_units,

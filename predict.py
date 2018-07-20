@@ -21,10 +21,13 @@ def main():
     if args.gpu and torch.cuda.is_available():
         device = torch.device('cuda:0')
     else:
-        devide = torch.device('cpu')
+        device = torch.device('cpu')
+
 
     image_path = args.input
     trained_model = load_checkpoint(args.checkpoint)
+    trained_model.to(device)
+    
     cat_to_name = get_label_mapping(args.category_names)
 
     probs, classes = predict('flowers/test/10/image_07090.jpg', trained_model, args.top_k)
@@ -98,7 +101,7 @@ def predict(image_path, model, topk=5):
     output = model.forward(img.float())
     ps = F.softmax(output, dim=1)
 
-    probs, classes = ps.topk(5)
+    probs, classes = ps.topk(topk)
     probs = probs.detach().numpy()[0]
     classes = classes.numpy()[0]
     return probs, classes
