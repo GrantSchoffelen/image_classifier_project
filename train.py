@@ -15,7 +15,7 @@ from collections import OrderedDict
 def main():
     args = get_input_args()
 
-    data_dir = args.data_directory
+    data_dir = args.directory
     train_dir = data_dir + '/train'
     valid_dir = data_dir + '/valid'
     test_dir = data_dir + '/test'
@@ -30,10 +30,10 @@ def main():
     for param in model.parameters():
         param.requires_grad = False
 
-    if args.arch === 'densenet121':
+    if args.arch == 'densenet121':
         input_size = 1024
 
-    if args.arch === 'vgg16':
+    if args.arch == 'vgg16':
         input_size = 784
 
     classifier = nn.Sequential(OrderedDict([
@@ -49,11 +49,11 @@ def main():
     criterion = nn.NLLLoss()
     optimizer = optim.Adam(model.classifier.parameters(), lr=args.learning_rate)
 
-    training_and_testing_saving(model, epochs, optimizer, criterion, args.gpu, image_sets, data_loaders, args.hidden_units, input_size)
+    training_and_testing_saving(model, epochs, optimizer, criterion, args.gpu, image_sets, data_loaders, args.hidden_units, input_size, args.arch)
 
 def get_input_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('data_directory', type=str, default = "flowers",
+    parser.add_argument('directory', type=str, default = "/flowers",
                     help="data_directory")
 
     parser.add_argument('--save_dir', type=str, default='checkpoints/',
@@ -98,7 +98,7 @@ def load_data(data_dir):
     return image_sets, data_loaders
 
 def training_and_testing_saving(model, epochs, optimizer, criterion, gpu,
-                                image_sets, data_loaders, hidden_units, save_dir):
+                                image_sets, data_loaders, hidden_units, save_dir, arch):
     print_every = 20
     steps = 0
 
@@ -172,7 +172,7 @@ def training_and_testing_saving(model, epochs, optimizer, criterion, gpu,
         'class_to_idx': model.class_to_idx,
         'hidden_layer': hidden_units,
         'state_dict': model.state_dict(),
-        'arch': 'densenet121'
+        'arch': arch
     }
 
     torch.save(checkpoint, save_dir+'checkpoint.pth')

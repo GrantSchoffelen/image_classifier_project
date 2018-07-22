@@ -27,10 +27,10 @@ def main():
     image_path = args.input
     trained_model = load_checkpoint(args.checkpoint)
     trained_model.to(device)
-    
+
     cat_to_name = get_label_mapping(args.category_names)
 
-    probs, classes = predict('flowers/test/10/image_07090.jpg', trained_model, args.top_k)
+    probs, classes = predict(image_path, trained_model, args.top_k)
 
     classes = classes.astype(str)
 
@@ -58,7 +58,7 @@ def get_input_args():
 
 def load_checkpoint(filepath):
     checkpoint = torch.load(filepath)
-    model = models.densenet121(pretrained=True)
+    model = models.checkpoint['arch'](pretrained=True)
     new_classifier = nn.Sequential(OrderedDict([
                           ('fc1', nn.Linear(checkpoint['input_size'], checkpoint['hidden_layers'][0])),
                           ('relu', nn.ReLU()),
@@ -66,6 +66,7 @@ def load_checkpoint(filepath):
                           ('fc2', nn.Linear(checkpoint['hidden_layers'][0], checkpoint['output_size'])),
                           ('output', nn.LogSoftmax(dim=1))
                           ]))
+
     model.classifier = new_classifier
     model.load_state_dict(checkpoint['state_dict'])
 
